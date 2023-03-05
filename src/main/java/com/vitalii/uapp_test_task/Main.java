@@ -4,10 +4,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class UappTestTaskApplication {
+public class Main {
 
   public static void main(String[] args) {
-    SpringApplication.run(UappTestTaskApplication.class, args);
+    SpringApplication.run(Main.class, args);
   }
-
 }

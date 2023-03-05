@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: test_task
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/test_task
+    username: postgres
+    password: vetal54
+    driver-class-name: org.postgresql.Driver
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  jpa:
+    show-sql: true
+
+server:
+  port: 8081

@@ -1,12 +1,16 @@
 package com.vitalii.uapp_test_task.entity;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import lombok.Getter;
+import lombok.Setter;
 
-
-@Data
-@EqualsAndHashCode(callSuper = true)
+@Getter
+@Setter
+@Entity
+@Table(name = "column_table")
 public class Column extends Domain {
 
   private String name;
+  private int columnIndex;
 }
