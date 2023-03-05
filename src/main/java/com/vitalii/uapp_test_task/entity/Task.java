@@ -1,12 +1,15 @@
 package com.vitalii.uapp_test_task.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.Hibernate;
+import org.springframework.data.annotation.CreatedDate;
 
 @Getter
 @Setter
@@ -16,8 +19,13 @@ public class Task extends Domain {
 
   private String name;
   private String description;
-  private LocalDateTime createDate;
+
+  @CreatedDate
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+  private LocalDateTime createDate = LocalDateTime.now();
+
   private int taskIndex;
+  private UUID columnId;
 
   @Override
   public boolean equals(Object o) {
