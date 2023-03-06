@@ -3,7 +3,10 @@ package com.vitalii.uapp_test_task.service;
 import com.vitalii.uapp_test_task.entity.Column;
 import com.vitalii.uapp_test_task.repository.ColumnRepository;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +18,26 @@ public class ColumnService extends AbstractService<Column, ColumnRepository> {
   }
 
   public List<Column> findAll() {
-    return repository.findAll()
-        .stream()
+    return repository.findAll().stream()
         .sorted(comparator)
         .collect(Collectors.toList());
+  }
+
+  public Map<String, Object> changeColumnIndex(UUID firstColumnId, UUID secondColumnId) {
+    Column firstColumn = findById(firstColumnId);
+    Column secondColumn = findById(secondColumnId);
+
+    int tmp = firstColumn.getColumnIndex();
+    firstColumn.setColumnIndex(secondColumn.getColumnIndex());
+    secondColumn.setColumnIndex(tmp);
+
+    save(firstColumn);
+    save(secondColumn);
+
+    Map<String, Object> map = new HashMap<>();
+    map.put("firstColumn", firstColumn);
+    map.put("secondColumn", secondColumn);
+    return map;
   }
 
   private final Comparator<Column> comparator = ((o1, o2) -> {

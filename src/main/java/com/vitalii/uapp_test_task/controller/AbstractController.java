@@ -23,17 +23,17 @@ public class AbstractController<E extends Domain, S extends CommonService<E>> im
 
   @PostMapping
   public ResponseEntity<E> create(@RequestBody E e) {
-    E entityResponse = service.save(e);
-    return new ResponseEntity<>(entityResponse, HttpStatus.CREATED);
+    E result = service.save(e);
+    return new ResponseEntity<>(result, HttpStatus.CREATED);
   }
 
   @PutMapping("/{id}")
   public ResponseEntity<E> update(@PathVariable UUID id, @RequestBody E resource) {
     service.findById(id);
     resource.setId(id);
-    E response = service.update(resource);
+    E result = service.update(resource);
 
-    return ResponseEntity.ok().body(response);
+    return ResponseEntity.ok().body(result);
   }
 
   @DeleteMapping
@@ -44,7 +44,7 @@ public class AbstractController<E extends Domain, S extends CommonService<E>> im
 
   @GetMapping("/{id}")
   public ResponseEntity<E> readById(@PathVariable UUID id) {
-    E response = service.findById(id);
-    return ResponseEntity.ok().body(response);
+    E result = service.findById(id);
+    return ResponseEntity.ok().body(result);
   }
 }
