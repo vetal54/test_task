@@ -30,7 +30,7 @@ public abstract class AbstractService<E extends Domain, R extends AbstractReposi
   @Override
   public E findById(UUID id) {
     return repository.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Resource not found"));
+        .orElseThrow(() -> new ResourceNotFoundException(resourceNotFoundText));
   }
 
   @Override
