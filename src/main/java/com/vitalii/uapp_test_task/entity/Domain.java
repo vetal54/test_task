@@ -1,8 +1,8 @@
 package com.vitalii.uapp_test_task.entity;
 
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
 import java.util.UUID;
+import javax.persistence.Id;
+import javax.persistence.MappedSuperclass;
 import lombok.Getter;
 import lombok.Setter;
 

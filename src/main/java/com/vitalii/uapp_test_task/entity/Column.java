@@ -1,7 +1,7 @@
 package com.vitalii.uapp_test_task.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 

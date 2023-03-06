@@ -1,11 +1,11 @@
 package com.vitalii.uapp_test_task.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.Hibernate;
