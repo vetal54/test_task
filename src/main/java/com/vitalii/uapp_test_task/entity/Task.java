@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.UUID;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.Hibernate;
@@ -17,7 +19,12 @@ import org.springframework.data.annotation.CreatedDate;
 @Table(name = "task")
 public class Task extends Domain {
 
+  @NotBlank(message = "Name is mandatory")
+  @Size(min = 1, max = 20)
   private String name;
+
+  @NotBlank(message = "Description is mandatory")
+  @Size(min = 1, max = 100)
   private String description;
 
   @CreatedDate

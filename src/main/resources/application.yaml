@@ -24,4 +24,4 @@ server:
   port: 8081
 
 exception:
-  notFound: Resource not found
+  notFound: "Resource not found for id: "
