@@ -27,7 +27,7 @@ public class ColumnController extends AbstractController<Column, ColumnService> 
 
   @PutMapping("/change/{id1}/{id2}")
   public ResponseEntity<Object> changeIndex(@PathVariable UUID id1, @PathVariable UUID id2) {
-    Map<String, Object> map = service.changeColumnIndex(id1, id2);
+    Map<String, Column> map = service.changeColumnIndex(id1, id2);
     return ResponseEntity.ok().body(map);
   }
 

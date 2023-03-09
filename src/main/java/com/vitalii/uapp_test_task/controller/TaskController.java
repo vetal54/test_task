@@ -21,13 +21,13 @@ public class TaskController extends AbstractController<Task, TaskService> {
     super(taskService);
   }
 
-  @GetMapping("/allTasksById/{id}")
-  public List<Task> readAllById(@PathVariable UUID id) {
-    return service.findAllById(id);
+  @GetMapping("/tasks")
+  public List<Task> readAllById(@RequestParam List<UUID> ids) {
+    return service.findAllById(ids);
   }
 
   @PutMapping("/move/{id}/foreignKey")
-  public ResponseEntity<Task> updateColumn(@PathVariable UUID id,
+  public ResponseEntity<Task> updateColumnId(@PathVariable UUID id,
       @RequestParam UUID newForeignKey) {
     Task taskResult = service.moveColumn(id, newForeignKey);
     return ResponseEntity.ok().body(taskResult);

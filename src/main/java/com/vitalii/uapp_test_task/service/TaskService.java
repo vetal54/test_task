@@ -17,8 +17,8 @@ public class TaskService extends AbstractService<Task, TaskRepository> {
     super(repository);
   }
 
-  public List<Task> findAllById(UUID id) {
-    return repository.findAllByColumnId(id)
+  public List<Task> findAllById(List<UUID> ids) {
+    return repository.findAllById(ids)
         .stream()
         .sorted(comparator)
         .collect(Collectors.toList());

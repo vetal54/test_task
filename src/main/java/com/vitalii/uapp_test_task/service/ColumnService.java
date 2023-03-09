@@ -23,7 +23,7 @@ public class ColumnService extends AbstractService<Column, ColumnRepository> {
         .collect(Collectors.toList());
   }
 
-  public Map<String, Object> changeColumnIndex(UUID firstColumnId, UUID secondColumnId) {
+  public Map<String, Column> changeColumnIndex(UUID firstColumnId, UUID secondColumnId) {
     Column firstColumn = findById(firstColumnId);
     Column secondColumn = findById(secondColumnId);
 
@@ -34,7 +34,7 @@ public class ColumnService extends AbstractService<Column, ColumnRepository> {
     save(firstColumn);
     save(secondColumn);
 
-    Map<String, Object> map = new HashMap<>();
+    Map<String, Column> map = new HashMap<>();
     map.put("firstColumn", firstColumn);
     map.put("secondColumn", secondColumn);
     return map;
