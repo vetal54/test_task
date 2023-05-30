@@ -1,129 +1,136 @@
 package com.vitalii.uapp_test_task.service;
 
-import com.vitalii.uapp_test_task.dto.ColumnDTO;
-import com.vitalii.uapp_test_task.dto.TaskDTO;
+import com.vitalii.uapp_test_task.dto.ColumnDto;
 import com.vitalii.uapp_test_task.entity.Column;
+import com.vitalii.uapp_test_task.command.create.ColumnCreateCommand;
 import com.vitalii.uapp_test_task.entity.Task;
+import com.vitalii.uapp_test_task.exception.ResourceOverflowException;
+import com.vitalii.uapp_test_task.exception.ResourceNotFoundException;
 import com.vitalii.uapp_test_task.repository.ColumnRepository;
 import com.vitalii.uapp_test_task.repository.TaskRepository;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import javax.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class ColumnService {
 
   private static final Logger LOG = Logger.getLogger(ColumnService.class.getName());
 
   private final ColumnRepository columnRepository;
   private final TaskRepository taskRepository;
-  private final EntityMapper entityMapper;
 
-  public ColumnService(ColumnRepository columnRepository, TaskRepository taskRepository,
-      EntityMapper entityMapper) {
-    this.columnRepository = columnRepository;
-    this.taskRepository = taskRepository;
-    this.entityMapper = entityMapper;
-  }
+  public ColumnDto create(ColumnCreateCommand command) {
+    LOG.info("Saving column: " + command.toString());
 
-//  public Map<String, Column> changeColumnIndex(UUID firstColumnId, UUID secondColumnId) {
-//    Column firstColumn = findById(firstColumnId);
-//    Column secondColumn = findById(secondColumnId);
-//
-//    int tmp = firstColumn.getColumnIndex();
-//    firstColumn.setColumnIndex(secondColumn.getColumnIndex());
-//    secondColumn.setColumnIndex(tmp);
-//
-//    save(firstColumn);
-//    save(secondColumn);
-//
-//    Map<String, Column> map = new HashMap<>();
-//    map.put("firstColumn", firstColumn);
-//    map.put("secondColumn", secondColumn);
-//    return map;
-//  }
-
-  public ColumnDTO save(ColumnDTO columnDTO) {
-    LOG.info("Saving column: " + columnDTO.toString());
-
-    Column column = entityMapper.toColumn(columnDTO);
+    Column column = new Column(command.getName());
+    column.setColumnIndex(calculateColumnIndex());
     Column savedColumn = columnRepository.save(column);
 
     LOG.info("Saved column with id: " + savedColumn.getId());
-
-    return entityMapper.toColumnDTO(savedColumn);
+    return new ColumnDto(savedColumn);
   }
 
-  public ColumnDTO getById(Long id) {
+  public Column getById(Long id) {
     LOG.info("Fetching column by id: " + id);
 
-    Column column = columnRepository.findById(id).orElseThrow(
-        () -> new EntityNotFoundException("Column not found with id: " + id));
+    Column column = columnRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Column not found with id: " + id));
 
     LOG.info("Retrieved column with id: " + id);
-
-    return entityMapper.toColumnDTO(column);
+    return column;
   }
 
-  public ColumnDTO update(Long id, ColumnDTO columnDTO) {
+  public ColumnDto update(Long id, ColumnCreateCommand command) {
     LOG.info("Updating column with id: " + id);
 
-    Column column = columnRepository.findById(id).orElseThrow(
-            () -> new EntityNotFoundException("Column not found with id: " + id));
-    column.setName(columnDTO.getName());
+    Column column = getById(id);
+    column.setName(command.getName());
+    List<Task> tasks = new ArrayList<>();
+    command.getTaskIds().forEach(
+        taskId -> tasks.add(getTaskById(taskId)));
+    column.setTasks(tasks);
+    Column updatedColumn = columnRepository.save(column);
 
-    List<TaskDTO> taskDTOs = columnDTO.getTasksDTO();
-    if (taskDTOs != null) {
-      LOG.info("Updating tasks for column with id: " + id);
-
-      List<Task> tasks = taskDTOs.stream()
-          .map(taskDTO -> {
-            Task task = taskDTO.getId() != null
-                ? taskRepository.findById(taskDTO.getId()).orElseThrow()
-                : new Task();
-            task.setName(taskDTO.getName());
-            task.setDescription(taskDTO.getDescription());
-            task.setTaskIndex(taskDTO.getTaskIndex());
-            task.setColumn(column);
-            return task;
-          })
-          .collect(Collectors.toList());
-      column.setTasks(tasks);
-    }
-    Column savedColumn = columnRepository.save(column);
-
-    LOG.info("Updated column with id: " + savedColumn.getId());
-
-    return entityMapper.toColumnDTO(savedColumn);
+    LOG.info("Updated column with id: " + updatedColumn.getId());
+    return new ColumnDto(updatedColumn);
   }
 
-  public List<ColumnDTO> getAll() {
+  public List<ColumnDto> getAll() {
     LOG.info("Fetching all columns");
-    List<Column> columns = columnRepository.findAll().stream()
-        .sorted(comparator)
+
+    List<ColumnDto> columns = columnRepository.findAll()
+        .stream()
+        .sorted(Comparator.comparing(Column::getColumnIndex))
+        .map(ColumnDto::new)
         .collect(Collectors.toList());
 
     LOG.info("Retrieved " + columns.size() + " columns");
-    return entityMapper.toColumnListDTO(columns);
+    return columns;
   }
 
   public void delete(Long id) {
-    Column column = columnRepository.findById(id).orElseThrow(
-            () -> new EntityNotFoundException("Column not found with id: " + id));
+    Column column = getById(id);
 
     LOG.info("Deleting column with id: " + id);
 
     columnRepository.delete(column);
   }
 
-  private final Comparator<Column> comparator = ((o1, o2) -> {
-    if (o1.getColumnIndex() == o2.getColumnIndex()) {
-      return 0;
-    }
+  public ColumnDto addTaskToColumn(Long id, Long taskId) {
+    LOG.info("Adding task with id: " + taskId + " to column with id: " + id);
 
-    return (o1.getColumnIndex() > o2.getColumnIndex()) ? 1 : -1;
-  });
+    Column column = getById(id);
+    Task task = getTaskById(taskId);
+    task.setTaskIndex(calculateTaskIndex(column.getId()));
+    task.setColumn(column);
+    column.getTasks().add(task);
+    Column updatedColumn = columnRepository.save(column);
+
+    LOG.info("Task with id: " + taskId + "has been added to the column with id: " + id);
+    return new ColumnDto(updatedColumn);
+  }
+
+  private Task getTaskById(Long id) {
+    LOG.info("Fetching task by id: " + id);
+
+    Task task = taskRepository.findById(id)
+        .orElseThrow(() -> new ResourceNotFoundException("Task not found with id: " + id));
+
+    LOG.info("Retrieved task with id: " + id);
+    return task;
+  }
+
+  private int calculateColumnIndex() {
+    int size = columnRepository.findAll().size();
+    if (size < 20) {
+      int power = size + 11;
+      int result = (int) Math.pow(2, power);
+      LOG.info("Column index calculated: " + result);
+      return result;
+    } else {
+      String errorMessage = "Unable to save new column, no free space";
+      LOG.warning(errorMessage);
+      throw new ResourceOverflowException(errorMessage);
+    }
+  }
+
+  private int calculateTaskIndex(long columnId) {
+    int size = taskRepository.findAllByColumnId(columnId).size();
+    if (size < 20) {
+      int power = size + 11;
+      int result = (int) Math.pow(2, power);
+      LOG.info("Task index calculated: " + result);
+      return result;
+    } else {
+      String errorMessage = "The task cannot be placed in the column with id: " + columnId;
+      LOG.warning(errorMessage);
+      throw new ResourceOverflowException(errorMessage);
+    }
+  }
 }

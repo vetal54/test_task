@@ -1,104 +1,169 @@
 package com.vitalii.uapp_test_task.service;
 
-import com.vitalii.uapp_test_task.entity.Column;
+import com.vitalii.uapp_test_task.command.create.ColumnCreateCommand;
+import com.vitalii.uapp_test_task.command.create.TaskCreateCommand;
+import com.vitalii.uapp_test_task.dto.ColumnDto;
+import com.vitalii.uapp_test_task.dto.TaskDto;
 import com.vitalii.uapp_test_task.entity.Task;
 import com.vitalii.uapp_test_task.exception.ResourceNotFoundException;
+import com.vitalii.uapp_test_task.repository.TaskRepository;
+import java.util.HashSet;
 import java.util.List;
-import java.util.UUID;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class TaskServiceTest {
 
   @Autowired
-  private TaskService taskService;
+  private TaskRepository taskRepository;
   @Autowired
   private ColumnService columnService;
+  @Autowired
+  private TaskService taskService;
 
   @Test
-  void save() {
-    Task task = createTask();
-    Task saveTask = taskService.save(task);
+  void testCreate() {
+    TaskCreateCommand command = new TaskCreateCommand("Task", "Description");
 
-    Assertions.assertEquals(task, saveTask);
-  }
+    TaskDto result = taskService.create(command);
 
-  @Test
-  void update() {
-    Task task = taskService.save(createTask());
-    task.setName("New test name");
-
-    Task updateTask = taskService.update(task);
-
-    Assertions.assertAll(
-        () -> Assertions.assertEquals("New test name", updateTask.getName()),
-        () -> Assertions.assertEquals(task, updateTask)
-    );
+    assertNotNull(result);
+    assertNotNull(result.getId());
+    assertEquals("Task", result.getName());
+    assertEquals("Description", result.getDescription());
   }
 
   @Test
-  void getById() {
-    Task task = taskService.save(createTask());
-    Task findByIdTask = taskService.findById(task.getId());
+  void testGetById_existingId() {
+    Task task = new Task(new TaskCreateCommand("Task", "Description"));
+    taskRepository.save(task);
 
-    Assertions.assertEquals(task, findByIdTask);
+    Task result = taskService.getById(task.getId());
+
+    assertNotNull(result);
+    assertEquals(task.getId(), result.getId());
+    assertEquals(task.getName(), result.getName());
   }
 
   @Test
-  void findByIdFalse() {
-    UUID randomId = UUID.randomUUID();
-
-    Assertions.assertThrows(ResourceNotFoundException.class,
-        () -> taskService.findById(randomId));
+  void testGetById_nonExistingId() {
+    assertThrows(ResourceNotFoundException.class, () -> taskService.getById(-1L));
   }
 
   @Test
-  void getAllByIds() {
-    Task firstTask = taskService.save(createTask());
+  void testGetAllByColumnId() {
+    TaskDto task1 = taskService.create(new TaskCreateCommand("Task1", "Description1"));
+    TaskDto task2 = taskService.create(new TaskCreateCommand("Task2", "Description2"));
 
-    Task secondTask = new Task();
-    secondTask.setName("Second task");
-    secondTask.setDescription("description");
-    secondTask.setTaskIndex(firstTask.getTaskIndex() + 1);
-    secondTask.setColumnId(firstTask.getColumnId());
-    Task saveSecondTask = taskService.save(secondTask);
+    ColumnDto column = columnService.create(new ColumnCreateCommand("name", new HashSet<>()));
 
-    List<UUID> ids = List.of(firstTask.getId(), secondTask.getId());
-    List<Task> tasks = taskService.findAllById(ids);
+    columnService.addTaskToColumn(column.getId(), task1.getId());
+    columnService.addTaskToColumn(column.getId(), task2.getId());
 
-    Assertions.assertAll(
-        () -> Assertions.assertEquals(2, tasks.size()),
-        () -> Assertions.assertTrue(tasks.contains(firstTask)),
-        () -> Assertions.assertTrue(tasks.contains(saveSecondTask))
-    );
+    List<Task> result = taskService.getAllByColumnId(column.getId());
+
+    assertNotNull(result);
+    assertEquals(2, result.size());
+    assertEquals("Task1", result.get(0).getName());
+    assertEquals("Task2", result.get(1).getName());
   }
 
   @Test
-  void moveColumn() {
-    Task task = taskService.save(createTask());
-    Column newColumn = createColumn();
+  void testUpdate() {
+    TaskDto task = taskService.create(new TaskCreateCommand("Task1", "Description1"));
 
-    Task updateTask = taskService.moveColumn(task.getId(), newColumn.getId());
+    TaskCreateCommand command = new TaskCreateCommand("Updated Task", "Updated Description");
 
-    Assertions.assertEquals(newColumn.getId(), updateTask.getColumnId());
+    TaskDto result = taskService.update(task.getId(), command);
+
+    assertNotNull(result);
+    assertEquals(task.getId(), result.getId());
+    assertEquals("Updated Task", result.getName());
+    assertEquals("Updated Description", result.getDescription());
+
+    Task updatedTask = taskRepository.findById(task.getId()).orElse(null);
+    assertNotNull(updatedTask);
+    assertEquals("Updated Task", updatedTask.getName());
+    assertEquals("Updated Description", updatedTask.getDescription());
   }
 
-  private Task createTask() {
-    Task task = new Task();
-    task.setName("Test name");
-    task.setDescription("Test description");
-    task.setTaskIndex(0);
-    task.setColumnId(createColumn().getId());
-    return task;
+  @Test
+  void testDelete() {
+    TaskDto task = taskService.create(new TaskCreateCommand("Task1", "Description1"));
+    taskService.delete(task.getId());
+    assertNull(taskRepository.findById(task.getId()).orElse(null));
   }
 
-  private Column createColumn() {
-    Column column = new Column();
-    column.setName("Test");
-    column.setColumnIndex(0);
-    return columnService.save(column);
+  @Test
+  void testChangeOrder_noChange() {
+    TaskDto task = taskService.create(new TaskCreateCommand("Task1", "Description1"));
+
+    columnService.create(new ColumnCreateCommand("name", new HashSet<>()));
+
+    columnService.addTaskToColumn(1L, 1L);
+
+    TaskDto result = taskService.changeOrder(task.getId(), 0);
+
+    assertNotNull(result);
+    assertEquals(task.getId(), result.getId());
+    assertEquals(2048, result.getTaskIndex());
+  }
+
+  @Test
+  void testChangeOrder_startPosition() {
+    TaskDto task1 = taskService.create(new TaskCreateCommand("Task1", "Description1"));
+    TaskDto task2 = taskService.create(new TaskCreateCommand("Task2", "Description2"));
+
+    columnService.create(new ColumnCreateCommand("name", new HashSet<>()));
+
+    columnService.addTaskToColumn(1L, task1.getId());
+    columnService.addTaskToColumn(1L, task2.getId());
+
+    TaskDto result = taskService.changeOrder(task2.getId(), 0);
+
+    assertNotNull(result);
+    assertEquals(task2.getId(), result.getId());
+    assertEquals(1024, result.getTaskIndex());
+  }
+
+  @Test
+  void testChangeOrder_endPosition() {
+    taskRepository.deleteAll();
+    TaskDto task1 = taskService.create(new TaskCreateCommand("Task1", "Description1"));
+    TaskDto task2 = taskService.create(new TaskCreateCommand("Task2", "Description2"));
+
+    ColumnDto column = columnService.create(new ColumnCreateCommand("name", new HashSet<>()));
+
+    columnService.addTaskToColumn(column.getId(), task1.getId());
+    columnService.addTaskToColumn(column.getId(), task2.getId());
+
+    TaskDto result = taskService.changeOrder(task1.getId(), 1);
+
+    assertNotNull(result);
+    assertEquals(task1.getId(), result.getId());
+    assertEquals(3072, result.getTaskIndex());
+  }
+
+  @Test
+  void testChangeOrder_middlePosition() {
+    TaskDto task1 = taskService.create(new TaskCreateCommand("Task1", "Description1"));
+    TaskDto task2 = taskService.create(new TaskCreateCommand("Task2", "Description2"));
+    TaskDto task3 = taskService.create(new TaskCreateCommand("Task3", "Description3"));
+
+    ColumnDto column = columnService.create(new ColumnCreateCommand("name", new HashSet<>()));
+
+    columnService.addTaskToColumn(column.getId(), task1.getId());
+    columnService.addTaskToColumn(column.getId(), task2.getId());
+    columnService.addTaskToColumn(column.getId(), task3.getId());
+
+    TaskDto result = taskService.changeOrder(task1.getId(), 2);
+
+    assertNotNull(result);
+    assertEquals(task1.getId(), result.getId());
+    assertEquals(6144, result.getTaskIndex());
   }
 }
