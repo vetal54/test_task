@@ -3,7 +3,7 @@ spring:
     name: test_task
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/test_task
+    url: jdbc:postgresql://db:5432/test_task
     username: postgres
     password: vetal54
     driver-class-name: org.postgresql.Driver

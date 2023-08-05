@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  db:
+    image: postgres:10
+    container_name: my_postgres
+    environment:
+      - 'POSTGRES_DB=test_task'
+      - 'POSTGRES_USER=postgres'
+      - 'POSTGRES_PASSWORD=vetal54'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: ./
+    container_name: my_spring_app
+    ports:
+      - "8081:8081"
+
+volumes:
+  postgres_data:

@@ -96,7 +96,7 @@ public class ColumnService {
     return new ColumnDto(updatedColumn);
   }
 
-  private Task getTaskById(Long id) {
+  public Task getTaskById(Long id) {
     LOG.info("Fetching task by id: " + id);
 
     Task task = taskRepository.findById(id)

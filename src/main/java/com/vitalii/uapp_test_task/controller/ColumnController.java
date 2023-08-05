@@ -3,7 +3,6 @@ package com.vitalii.uapp_test_task.controller;
 import com.vitalii.uapp_test_task.dto.ColumnDto;
 import com.vitalii.uapp_test_task.command.create.ColumnCreateCommand;
 import com.vitalii.uapp_test_task.service.ColumnService;
-import com.vitalii.uapp_test_task.service.TaskService;
 import java.util.List;
 import java.util.logging.Logger;
 import lombok.RequiredArgsConstructor;
