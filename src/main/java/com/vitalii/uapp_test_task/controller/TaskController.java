@@ -40,15 +40,6 @@ public class TaskController {
     return ResponseEntity.ok(new TaskDto(taskService.getById(id)));
   }
 
-  @GetMapping("/{columnId}/byColumnId")
-  public ResponseEntity<List<TaskDto>> getAllByColumnId(@PathVariable Long columnId) {
-    LOG.info("Getting all tasks by column id: " + columnId);
-    return ResponseEntity.ok(taskService.getAllByColumnId(columnId)
-        .stream()
-        .map(TaskDto::new)
-        .collect(Collectors.toList()));
-  }
-
   @PutMapping("/{id}/update")
   public ResponseEntity<TaskDto> update(@PathVariable Long id,
       @RequestBody TaskCreateCommand command) {

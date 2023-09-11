@@ -2,9 +2,12 @@ package com.vitalii.uapp_test_task.controller;
 
 import com.vitalii.uapp_test_task.dto.ColumnDto;
 import com.vitalii.uapp_test_task.command.create.ColumnCreateCommand;
+import com.vitalii.uapp_test_task.dto.TaskDto;
 import com.vitalii.uapp_test_task.service.ColumnService;
+import com.vitalii.uapp_test_task.service.TaskService;
 import java.util.List;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,6 +29,7 @@ public class ColumnController {
   private static final Logger LOG = Logger.getLogger(ColumnController.class.getName());
 
   private final ColumnService columnService;
+  private final TaskService taskService;
 
   @PostMapping
   public ResponseEntity<ColumnDto> create(@RequestBody ColumnCreateCommand command) {
@@ -59,7 +63,16 @@ public class ColumnController {
     return ResponseEntity.ok().build();
   }
 
-  @PatchMapping("/{id}/addTask")
+  @GetMapping("/{id}/tasks")
+  public ResponseEntity<List<TaskDto>> getAllByColumnId(@PathVariable Long id) {
+    LOG.info("Getting all tasks by column id: " + id);
+    return ResponseEntity.ok(taskService.getAllByColumnId(id)
+        .stream()
+        .map(TaskDto::new)
+        .collect(Collectors.toList()));
+  }
+
+  @PatchMapping("/{id}/task/add")
   public ResponseEntity<ColumnDto> addTaskToColumn(@PathVariable Long id, Long taskId) {
     LOG.info("Adding task with id " + taskId + " to column with id: " + id);
     return ResponseEntity.ok(columnService.addTaskToColumn(id, taskId));
